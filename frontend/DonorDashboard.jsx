@@ -1,66 +1,56 @@
 import React, { useEffect, useState } from "react";
-import socket from "./socket";
 
 export default function DonorDashboard() {
-  const [request, setRequest] = useState(null);
-
-  const donorId = "DONOR123"; // later replace with login system
+  const donorId = "YOUR_REAL_DONOR_ID"; // replace properly later
+  const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    socket.emit("register", donorId);
-
-    socket.on("receive_request", (data) => {
-      setRequest(data);
-    });
-
-    return () => {
-      socket.off("receive_request");
-    };
+    fetch(`http://localhost:5000/requests/donor/${donorId}`)
+      .then((res) => res.json())
+      .then((data) => setRequests(data));
   }, []);
 
-  const acceptRequest = () => {
-    socket.emit("accept_request", {
-      requesterId: request.requesterId,
-      donorPhone: request.donorPhone,
+  const updateStatus = async (requestId, status) => {
+    await fetch(`http://localhost:5000/requests/update/${requestId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
     });
 
-    setRequest(null);
+    window.location.reload();
   };
 
   return (
-    <div className="min-h-screen bg-white flex justify-center items-center">
+    <div className="min-h-screen bg-white p-6">
+      <h2 className="text-2xl font-bold text-red-700 mb-6">
+        Incoming Requests
+      </h2>
 
-      <div className="bg-white shadow-xl p-8 rounded-xl">
+      {requests.length === 0 && <p>No requests</p>}
 
-        <h2 className="text-2xl font-bold text-red-700 mb-4">
-          Donor Dashboard
-        </h2>
+      {requests.map((req) => (
+        <div key={req._id} className="border p-4 mb-4 rounded shadow">
+          <p>Status: {req.status}</p>
 
-        {request ? (
-          <div>
-            <p className="text-black font-semibold mb-4">
-              Someone needs your blood.
-            </p>
+          {req.status === "Pending" && (
+            <>
+              <button
+                onClick={() => updateStatus(req._id, "Accepted")}
+                className="bg-green-600 text-white px-4 py-2 mr-2 rounded"
+              >
+                Accept
+              </button>
 
-            <button
-              onClick={acceptRequest}
-              className="bg-green-600 text-white px-4 py-2 rounded mr-2"
-            >
-              Accept
-            </button>
-
-            <button
-              onClick={() => setRequest(null)}
-              className="bg-gray-500 text-white px-4 py-2 rounded"
-            >
-              Reject
-            </button>
-          </div>
-        ) : (
-          <p className="text-black">No incoming requests</p>
-        )}
-
-      </div>
+              <button
+                onClick={() => updateStatus(req._id, "Rejected")}
+                className="bg-gray-500 text-white px-4 py-2 rounded"
+              >
+                Reject
+              </button>
+            </>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

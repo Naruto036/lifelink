@@ -10,6 +10,7 @@ router.post("/add", async (req, res) => {
     await donor.save();
     res.status(201).json(donor);
   } catch (error) {
+    console.error("Save error:",error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -42,7 +43,7 @@ router.get("/nearby", async (req, res) => {
             type: "Point",
             coordinates: [parseFloat(lng), parseFloat(lat)],
           },
-          $maxDistance: 5000, // 5 km radius
+          $maxDistance: 50000, // 5 km radius
         },
       },
     });

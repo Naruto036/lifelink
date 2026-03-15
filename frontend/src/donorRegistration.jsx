@@ -1,104 +1,143 @@
 import React, { useState } from "react";
 
-export default function DonorRegistration() {
-  const [formData, setFormData] = useState({
+export default function RegisterDonor() {
+  const [form, setForm] = useState({
     name: "",
     bloodGroup: "",
     phone: "",
+    location: "",
+    lat: "",
+    lng: ""
   });
 
-  const [locationQuery, setLocationQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [message, setMessage] = useState("");
+  const [loadingLocation, setLoadingLocation] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
-  const handleLocationSearch = async (value) => {
-    setLocationQuery(value);
-
-    if (value.length < 3) return;
-
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${value}`
-    );
-    const data = await response.json();
-    setSuggestions(data);
-  };
-
-  const handleSelectLocation = (place) => {
-    setSelectedLocation(place);
-    setLocationQuery(place.display_name);
-    setSuggestions([]);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!selectedLocation) {
-      setMessage("Please select location from suggestions");
+  // 🔎 Fetch locations from OpenStreetMap
+  const fetchLocations = async (value) => {
+    if (value.length < 3) {
+      setSuggestions([]);
       return;
     }
 
-    const donorData = {
-      ...formData,
-      location: {
-        type: "Point",
-        coordinates: [
-          parseFloat(selectedLocation.lon),
-          parseFloat(selectedLocation.lat),
-        ],
-        address: selectedLocation.display_name,
-      },
-    };
+    try {
+      setLoadingLocation(true);
+
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${value}`
+      );
+
+      const data = await res.json();
+      setSuggestions(data);
+      setLoadingLocation(false);
+    } catch (error) {
+      console.error("Location fetch error:", error);
+      setLoadingLocation(false);
+    }
+  };
+
+  // 📍 Select location from dropdown
+  const handleSelectLocation = (place) => {
+    setForm({
+      ...form,
+      location: place.display_name,
+      lat: place.lat,
+      lng: place.lon
+    });
+
+    setSuggestions([]);
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // 🚀 Submit to backend
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!form.lat || !form.lng) {
+      alert("Please select a valid location from suggestions");
+      return;
+    }
 
     try {
+      setLoadingSubmit(true);
+
       const res = await fetch("http://localhost:5000/donors/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(donorData),
+        body: JSON.stringify({
+          name: form.name,
+          bloodGroup: form.bloodGroup,
+          phone: form.phone,
+          location: {
+            type: "Point",
+            coordinates: [
+              Number(form.lng),  // ⚠ IMPORTANT: longitude first
+              Number(form.lat)   // latitude second
+            ],
+          address: form.location
+          }
+        }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        setMessage("Donor registered successfully!");
-        setFormData({ name: "", bloodGroup: "", phone: "" });
-        setLocationQuery("");
-        setSelectedLocation(null);
+        alert("Donor Registered Successfully!");
+
+        setForm({
+          name: "",
+          bloodGroup: "",
+          phone: "",
+          location: "",
+          lat: "",
+          lng: ""
+        });
+
+        setSuggestions([]);
       } else {
-        setMessage("Error registering donor");
+        alert(data.message || "Error saving donor");
       }
+
+      setLoadingSubmit(false);
     } catch (error) {
-      setMessage("Server error");
+      console.error("Error saving donor:", error);
+      alert("Server error. Check backend.");
+      setLoadingSubmit(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex justify-center items-center px-4">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-lg border border-gray-200">
-        
-        <h2 className="text-3xl font-extrabold text-red-700 mb-6 text-center">
-          Donor Registration
+    <div className="min-h-screen bg-gradient-to-br from-red-100 to-white flex items-center justify-center px-4">
+      <div className="bg-white shadow-2xl rounded-3xl p-10 w-full max-w-md relative">
+        <h2 className="text-3xl font-extrabold text-red-600 text-center mb-8">
+          Register as Donor
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
 
+          {/* Name */}
           <input
             type="text"
-            placeholder="Enter Full Name"
-            className="w-full border-2 border-gray-300 p-3 rounded-lg text-black font-semibold focus:outline-none focus:border-red-600"
-            value={formData.name}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
+            name="name"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={handleChange}
+            className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
             required
           />
 
+          {/* Blood Group */}
           <select
-            className="w-full border-2 border-gray-300 p-3 rounded-lg text-black font-semibold focus:outline-none focus:border-red-600"
-            value={formData.bloodGroup}
-            onChange={(e) =>
-              setFormData({ ...formData, bloodGroup: e.target.value })
-            }
+            name="bloodGroup"
+            value={form.bloodGroup}
+            onChange={handleChange}
+            className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
             required
           >
             <option value="">Select Blood Group</option>
@@ -112,35 +151,33 @@ export default function DonorRegistration() {
             <option>AB-</option>
           </select>
 
-          <input
-            type="text"
-            placeholder="Enter Phone Number"
-            className="w-full border-2 border-gray-300 p-3 rounded-lg text-black font-semibold focus:outline-none focus:border-red-600"
-            value={formData.phone}
-            onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
-            }
-            required
-          />
-
           {/* Location Autocomplete */}
           <div className="relative">
             <input
               type="text"
-              placeholder="Search Location"
-              className="w-full border-2 border-gray-300 p-3 rounded-lg text-black font-semibold focus:outline-none focus:border-red-600"
-              value={locationQuery}
-              onChange={(e) => handleLocationSearch(e.target.value)}
+              placeholder="Enter your location"
+              value={form.location}
+              onChange={(e) => {
+                setForm({ ...form, location: e.target.value });
+                fetchLocations(e.target.value);
+              }}
+              className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
               required
             />
 
+            {loadingLocation && (
+              <div className="text-sm text-gray-500 mt-1">
+                Searching location...
+              </div>
+            )}
+
             {suggestions.length > 0 && (
-              <ul className="absolute bg-white border-2 border-gray-300 w-full max-h-48 overflow-y-auto rounded-lg shadow-xl z-20">
-                {suggestions.map((place) => (
+              <ul className="absolute w-full bg-white border border-gray-200 rounded-xl mt-1 max-h-48 overflow-y-auto shadow-lg z-20">
+                {suggestions.map((place, index) => (
                   <li
-                    key={place.place_id}
-                    className="p-3 hover:bg-red-50 cursor-pointer text-black font-medium"
+                    key={index}
                     onClick={() => handleSelectLocation(place)}
+                    className="p-3 hover:bg-red-100 cursor-pointer text-gray-700 text-sm"
                   >
                     {place.display_name}
                   </li>
@@ -149,19 +186,27 @@ export default function DonorRegistration() {
             )}
           </div>
 
+          {/* Phone */}
+          <input
+            type="tel"
+            name="phone"
+            placeholder="Phone Number"
+            value={form.phone}
+            onChange={handleChange}
+            className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
+            required
+          />
+
+          {/* Submit */}
           <button
             type="submit"
-            className="w-full bg-red-600 text-white p-3 rounded-lg text-lg font-bold hover:bg-red-700 transition"
+            disabled={loadingSubmit}
+            className="w-full bg-red-600 hover:bg-red-700 text-white p-4 rounded-xl font-bold text-lg transition duration-300 shadow-md hover:shadow-xl disabled:opacity-60"
           >
-            Register
+            {loadingSubmit ? "Registering..." : "Register Now"}
           </button>
-        </form>
 
-        {message && (
-          <p className="mt-4 text-center text-green-600 font-semibold text-lg">
-            {message}
-          </p>
-        )}
+        </form>
       </div>
     </div>
   );

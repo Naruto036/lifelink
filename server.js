@@ -4,6 +4,7 @@ import { Server } from "socket.io";
 import mongoose from "mongoose";
 import cors from "cors";
 import donorRoutes from "./routes/donorRoutes.js";
+import requestRoutes from "./routes/requestRoutes.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +15,7 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use("/donors", donorRoutes);
+app.use("/requests",requestRoutes);
 
 mongoose.connect("mongodb://127.0.0.1:27017/bloodDonation")
   .then(() => console.log("MongoDB connected"));
