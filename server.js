@@ -18,6 +18,9 @@ app.use(cors());
 app.use(express.json());
 app.use("/donors", donorRoutes);
 app.use("/requests",requestRoutes);
+app.get("/", (req, res) => {
+  res.send("LifeLink Backend Running 🚀");
+});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to:", process.env.MONGO_URI))
