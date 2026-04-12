@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -17,9 +19,9 @@ app.use(express.json());
 app.use("/donors", donorRoutes);
 app.use("/requests",requestRoutes);
 
-mongoose.connect("mongodb://127.0.0.1:27017/bloodDonation")
-  .then(() => console.log("MongoDB connected"));
-
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ Connected to:", process.env.MONGO_URI))
+  .catch(err => console.log(err));
 let users = {};
 
 io.on("connection", (socket) => {
