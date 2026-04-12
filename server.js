@@ -20,7 +20,11 @@ app.use("/donors", donorRoutes);
 app.use("/requests",requestRoutes);
 app.get("/", (req, res) => {
   res.send("LifeLink Backend Running 🚀");
-});
+  app.use(cors({
+    origin:"https://lifelink-ahxd.vercel.app/"
+  }));
+  }
+);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to:", process.env.MONGO_URI))
