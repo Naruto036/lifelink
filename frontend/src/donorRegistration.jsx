@@ -7,7 +7,8 @@ export default function RegisterDonor() {
     phone: "",
     location: "",
     lat: "",
-    lng: ""
+    lng: "",
+    email: ""   // ✅ ADDED
   });
 
   const [suggestions, setSuggestions] = useState([]);
@@ -74,13 +75,14 @@ export default function RegisterDonor() {
           name: form.name,
           bloodGroup: form.bloodGroup,
           phone: form.phone,
+          email: form.email,   // ✅ ADDED
           location: {
             type: "Point",
             coordinates: [
-              Number(form.lng),  // ⚠ IMPORTANT: longitude first
-              Number(form.lat)   // latitude second
+              Number(form.lng),
+              Number(form.lat)
             ],
-          address: form.location
+            address: form.location
           }
         }),
       });
@@ -96,7 +98,8 @@ export default function RegisterDonor() {
           phone: "",
           location: "",
           lat: "",
-          lng: ""
+          lng: "",
+          email: ""   // ✅ RESET
         });
 
         setSuggestions([]);
@@ -192,6 +195,17 @@ export default function RegisterDonor() {
             name="phone"
             placeholder="Phone Number"
             value={form.phone}
+            onChange={handleChange}
+            className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
+            required
+          />
+
+          {/* Email ✅ NEW */}
+          <input
+            type="email"
+            name="email"
+            placeholder="Enter your email (for notifications)"
+            value={form.email}
             onChange={handleChange}
             className="w-full p-4 border border-gray-300 rounded-xl text-gray-800 focus:ring-2 focus:ring-red-500"
             required

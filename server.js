@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
+import nodemailer from "nodemailer";
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
@@ -12,7 +13,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" }
-});
+})
 
 app.use(cors());
 app.use(express.json());
@@ -25,11 +26,32 @@ app.get("/", (req, res) => {
   }));
   }
 );
+app.get("/test-email", async (req, res) => {
+  try {
+    await transporter.sendMail({
+      to: process.env.EMAIL_USER,
+      subject: "Test Email",
+      text: "Email working ✅"
+    });
+
+    res.send("Email sent successfully");
+  } catch (err) {
+    console.log(err);
+    res.send("Email failed");
+  }
+});
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to:", process.env.MONGO_URI))
   .catch(err => console.log(err));
 let users = {};
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 io.on("connection", (socket) => {
 
