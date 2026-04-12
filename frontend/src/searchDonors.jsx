@@ -104,7 +104,7 @@ useEffect(() => {
       // CRITICAL: encodeURIComponent handles the '+' in blood groups like A+ or B+
       const bloodParam = encodeURIComponent(bloodGroup);
       const res = await fetch(
-        `http://localhost:5000/donors/all?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${bloodParam}`
+        `https://lifelink-3-nk8d.onrender.com/donors/all?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${bloodParam}`
       );
 
       const data = await res.json();

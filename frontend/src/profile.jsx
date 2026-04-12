@@ -6,7 +6,7 @@ function Profile({ donor }) {
 
   const toggleStatus = async () => {
     const res = await axios.patch(
-      `http://localhost:5000/donor/${donor._id}/toggle-status`
+      `https://lifelink-3-nk8d.onrender.com/donor/${donor._id}/toggle-status`
     );
 
     setIsActive(res.data.isActive);
