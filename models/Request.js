@@ -8,11 +8,9 @@ const requestSchema = new mongoose.Schema({
   },
   requesterId: {
     type: String,
-    required: true,
   },
   status: {
     type: String,
-    enum: ["Pending", "Accepted", "Rejected"],
     default: "Pending",
   },
 }, { timestamps: true });

@@ -31,7 +31,14 @@ const donorSchema = new mongoose.Schema({
       type: String,
       required: true,
     },
-  },
+  },email: {
+  type: String,
+  required: true
+},
+phone: {
+  type: String,
+  required: true
+}
 });
 
 donorSchema.index({ location: "2dsphere" });
