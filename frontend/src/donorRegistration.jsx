@@ -66,7 +66,7 @@ export default function RegisterDonor() {
     try {
       setLoadingSubmit(true);
 
-      const res = await fetch("https://lifelink-4.onrender.com", {
+      const res = await fetch("https://lifelink-4.onrender.com/donors/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
