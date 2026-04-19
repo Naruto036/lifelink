@@ -16,6 +16,7 @@ const transporter = nodemailer.createTransport({
 
 // ✅ SEND REQUEST + EMAIL
 router.post("/send", async (req, res) => {
+  console.log("BODY DATA",req.body);
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
