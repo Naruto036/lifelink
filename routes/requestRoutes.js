@@ -19,10 +19,22 @@ router.post("/send", async (req, res) => {
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
+    console.log("📩 Incoming request:", req.body);
+
     const donor = await Donor.findById(donorId);
 
     if (!donor) {
       return res.status(404).json({ message: "Donor not found" });
+    }
+
+    console.log("👤 Donor found:", donor.name);
+    console.log("📧 Donor email:", donor.email);
+
+    // ❌ IMPORTANT FIX: Check email exists
+    if (!donor.email) {
+      return res.status(400).json({
+        message: "Donor does not have an email address",
+      });
     }
 
     // ✅ Save request
@@ -36,8 +48,8 @@ router.post("/send", async (req, res) => {
 
     const BASE_URL = "https://lifelink-4.onrender.com";
 
-    // ✅ SEND EMAIL WITH BUTTONS
-    await transporter.sendMail({
+    // ✅ SEND EMAIL
+    const info = await transporter.sendMail({
       from: `"LifeLink 🩸" <${process.env.EMAIL_USER}>`,
       to: donor.email,
       subject: "🩸 Blood Request - Action Needed",
@@ -66,16 +78,23 @@ router.post("/send", async (req, res) => {
       `,
     });
 
+    console.log("✅ Email sent:", info.response);
+
     res.status(201).json({
       message: "Request sent & email delivered ✅",
       request,
     });
 
   } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ error: err.message });
+    console.error("❌ Email/Request Error:", err);
+
+    res.status(500).json({
+      error: "Failed to send request or email",
+      details: err.message,
+    });
   }
 });
+
 
 // ✅ ACCEPT / REJECT FROM EMAIL
 router.get("/action/:id/:type", async (req, res) => {
@@ -106,17 +125,18 @@ router.get("/action/:id/:type", async (req, res) => {
     }
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ Action Error:", err);
     res.send("Error processing request");
   }
 });
 
-// ✅ GET REQUESTS (WITH DONOR PHONE)
+
+// ✅ GET REQUESTS
 router.get("/donor/:donorId", async (req, res) => {
   try {
     const requests = await Request.find({
       donorId: req.params.donorId,
-    }).populate("donorId"); // 🔥 important
+    }).populate("donorId");
 
     res.json(requests);
   } catch (err) {
@@ -124,7 +144,8 @@ router.get("/donor/:donorId", async (req, res) => {
   }
 });
 
-// ✅ UPDATE STATUS (optional manual update)
+
+// ✅ UPDATE STATUS
 router.put("/update/:id", async (req, res) => {
   try {
     const { status } = req.body;
