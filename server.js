@@ -22,9 +22,10 @@ app.use("/requests",requestRoutes);
 app.get("/", (req, res) => {
   res.send("LifeLink Backend Running 🚀");
   app.use(cors({
-    origin:"https://lifelink-ahxd.vercel.app"
-  }));
-  }
+    origin:"https://lifelink-pw8s.vercel.app"
+    
+}));
+}
 );
 app.get("/test-email", async (req, res) => {
   try {
