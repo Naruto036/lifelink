@@ -1,6 +1,6 @@
 import express from "express";
-import Request from "../models/Request.js";
-import Donor from "../models/Donor.js";
+import Request from "./Request.js";
+import Donor from "./Donor.js";
 import nodemailer from "nodemailer";
 
 const router = express.Router();
