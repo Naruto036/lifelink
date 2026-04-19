@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
-const socket = io("https://lifelink-3-nk8d.onrender.com/");
+const socket = io("https://lifelink-4.onrender.com");
 
 export default function NotificationBell({ userId }) {
   const [notifications, setNotifications] = useState([]);
