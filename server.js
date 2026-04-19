@@ -22,7 +22,18 @@ app.use("/requests",requestRoutes);
 app.get("/", (req, res) => {
   res.send("LifeLink Backend Running 🚀");
   app.use(cors({
-    origin:"https://lifelink-pw8s-44nz1xtyn-naruto036s-projects.vercel.app"
+    origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (
+      origin.includes("vercel.app")
+    ) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials:true
     
 }));
 }
