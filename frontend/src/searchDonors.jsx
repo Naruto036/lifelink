@@ -84,6 +84,26 @@ export default function SearchDonors() {
       }
     );
   }, []);
+  useEffect(() => {
+  const fetchAccepted = async () => {
+    try {
+      const res = await fetch(
+        `https://lifelink-4.onrender.com/api/requests/accepted/${userId}`
+      );
+
+      const data = await res.json();
+
+      // store donorIds
+      const acceptedIds = data.map((req) => req.donorId);
+      setAcceptedDonors(acceptedIds);
+
+    } catch (err) {
+      console.error("Error fetching accepted:", err);
+    }
+  };
+
+  fetchAccepted();
+}, []);
 
   const handleSearch = async () => {
     if (!bloodGroup) {

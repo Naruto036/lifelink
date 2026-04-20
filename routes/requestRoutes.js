@@ -144,7 +144,18 @@ router.get("/donor/:donorId", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.get("/accepted/:requesterId", async (req, res) => {
+  try {
+    const requests = await Request.find({
+      requesterId: req.params.requesterId,
+      status: "Accepted",
+    });
 
+    res.json(requests);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ✅ UPDATE STATUS
 router.put("/update/:id", async (req, res) => {
