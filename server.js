@@ -35,7 +35,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.options("*", cors());
+
 
 // ---------------- ROUTES ----------------
 app.use("/api/donors", donorRoutes);
