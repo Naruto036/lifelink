@@ -1,7 +1,6 @@
 import  { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
-import socket from "./socket";
 import "leaflet/dist/leaflet.css";
 
 // Helper component to move the map when location is found
@@ -50,21 +49,7 @@ useEffect(() => {
   );
 }, []);
 
-  // Socket Registration
-  useEffect(() => {
-    socket.emit("register", userId);
-    
-    socket.on("request_status_updated", (request) => {
-      if (request.status === "Accepted") {
-        setAcceptedDonors((prev) => [...prev, request.donorId]);
-        alert("Your request was accepted!");
-      } else if (request.status === "Rejected") {
-        alert("Your request was rejected.");
-      }
-    });
-
-    return () => socket.off("request_status_updated");
-  }, []);
+  
 
   // Get High Accuracy Location
   useEffect(() => {
