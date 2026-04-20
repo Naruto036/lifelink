@@ -47,7 +47,7 @@ router.post("/send", async (req, res) => {
 
     await request.save();
 
-    const BASE_URL = "https://lifelink-4.onrender.com";
+    const BASE_URL = "https://lifelink-4.onrender.com/api";
 
     // ✅ SEND EMAIL
     const info = await transporter.sendMail({
