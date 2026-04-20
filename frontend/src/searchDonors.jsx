@@ -107,13 +107,7 @@ useEffect(() => {
 const filteredDonors = donors.filter((donor) => {
   return donor.bloodGroup.toLowerCase() === selectedBlood.toLowerCase();
 });
-  const sendRequest = (donor) => {
-    socket.emit("new_request", {
-      donorId: donor._id,
-      requesterId: userId,
-    });
-    alert(`Request sent to ${donor.name}!`);
-  };
+
 
   if (!userLocation) {
     return (
