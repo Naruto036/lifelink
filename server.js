@@ -1,76 +1,68 @@
 import dotenv from "dotenv";
 dotenv.config();
-import nodemailer from "nodemailer";
+
 import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import cors from "cors";
+
 import donorRoutes from "./routes/donorRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" }
-})
 
-app.use(cors());
+// ---------------- SOCKET.IO ----------------
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "https://lifelink-ahxd.vercel.app",
+      "https://lifelink-pw8s.vercel.app"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+// ---------------- MIDDLEWARE ----------------
+app.use(cors({
+  origin: [
+    "https://lifelink-ahxd.vercel.app",
+    "https://lifelink-pw8s.vercel.app"
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
+
+// ---------------- ROUTES ----------------
 app.use("/api/donors", donorRoutes);
-app.use("/requests",requestRoutes);
+app.use("/api/requests", requestRoutes);
+
+// ---------------- HEALTH CHECK ----------------
 app.get("/", (req, res) => {
   res.send("LifeLink Backend Running 🚀");
-  app.use(cors({
-    origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    if (
-      origin.includes("vercel.app")
-    ) {
-      return callback(null, true);
-    } else {
-      return callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials:true
-    
-}));
-}
-);
-app.get("/test-email", async (req, res) => {
-  try {
-    await transporter.sendMail({
-      to: process.env.EMAIL_USER,
-      subject: "Test Email",
-      text: "Email working ✅"
-    });
-
-    res.send("Email sent successfully");
-  } catch (err) {
-    console.log(err);
-    res.send("Email failed");
-  }
 });
 
+// ---------------- MONGODB ----------------
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ Connected to:", process.env.MONGO_URI))
-  .catch(err => console.log(err));
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("Mongo Error:", err));
+
+// ---------------- SOCKET USER MAP ----------------
 let users = {};
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
+// ---------------- SOCKET EVENTS ----------------
 io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
 
+  // Register user
   socket.on("register", (userId) => {
     users[userId] = socket.id;
   });
 
+  // Send request (DONOR FLOW)
   socket.on("send_request", (data) => {
     const donorSocket = users[data.donorId];
     if (donorSocket) {
@@ -78,6 +70,7 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Accept request
   socket.on("accept_request", (data) => {
     const requesterSocket = users[data.requesterId];
     if (requesterSocket) {
@@ -85,8 +78,14 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
+  });
 });
 
+// ---------------- START SERVER ----------------
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, () => console.log(`Server running on ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
