@@ -4,7 +4,7 @@ import Donor from "../models/Donor.js";
 const router = express.Router();
 
 // ➜ ADD DONOR
-router.post("/", async (req, res) => {
+router.post("/api/donors", async (req, res) => {
   try {
     const donor = new Donor(req.body);
     await donor.save();
