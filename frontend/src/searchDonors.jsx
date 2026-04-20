@@ -65,6 +65,36 @@ useEffect(() => {
         lng: position.coords.longitude,
       });
     };
+    const sendRequest = async (donor) => {
+  try {
+    const res = await fetch(
+      "https://lifelink-4.onrender.com/api/requests/send",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          donorId: donor._id,
+          requesterId: "USER_123", // you can replace later
+          requesterName: "User",
+          bloodGroup: donor.bloodGroup,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("Request sent successfully ✅");
+    } else {
+      alert(data.message || "Failed to send request");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Server error");
+  }
+};
 
     const error = (err) => {
       console.error("Location error:", err);
