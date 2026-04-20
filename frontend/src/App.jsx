@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { HashRouter, Routes, Route, Link } from "react-router-dom";
 import DonorRegistration from "./donorRegistration.jsx";
 import SearchDonors from "./searchDonors.jsx";
-import socket from "./socket";
 import DonorDashboard from "../DonorDashboard.jsx";
 import Home from "./Home.jsx";
 import NotificationBell from "./Notification.jsx";
@@ -11,9 +10,7 @@ export default function App() {
 
   const userId = "donor123"; // later replace with real logged-in user
 
-  useEffect(() => {
-    socket.emit("register", userId);
-  }, []);
+  
 
   return (
     <HashRouter>
