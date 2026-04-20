@@ -1,34 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { io } from "socket.io-client";
-
-const socket = io("https://lifelink-4.onrender.com");
+import React, { useState } from "react";
 
 export default function NotificationBell({ userId }) {
   const [notifications, setNotifications] = useState([]);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    socket.emit("register", userId);
-
-    socket.on("receive_request", (data) => {
-      setNotifications((prev) => [...prev, data]);
-    });
-
-    socket.on("request_accepted", (data) => {
-      alert("Your blood request was accepted!");
-    });
-
-    return () => {
-      socket.off("receive_request");
-      socket.off("request_accepted");
-    };
-  }, [userId]);
+  // ❌ No socket, so no real-time push
+  // You will need API polling later if needed
 
   const acceptRequest = (request) => {
-    socket.emit("accept_request", {
-      requesterId: request.requesterId,
-      donorId: userId,
-    });
+    // If you still have backend endpoint, call API instead of socket
+    console.log("Accepted request:", request);
 
     setNotifications((prev) =>
       prev.filter((n) => n !== request)
@@ -39,18 +20,19 @@ export default function NotificationBell({ userId }) {
     <div className="fixed top-5 right-5 z-50">
       <div
         onClick={() => setOpen(!open)}
-        className="relative cursor-pointer"
+        className="relative cursor-pointer text-2xl"
       >
-        
+        🔔
+
         {notifications.length > 0 && (
-          <span className="text-2xl hover:scale-110 transition cursor-pointer">
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 rounded-full">
             {notifications.length}
           </span>
         )}
       </div>
 
       {open && (
-        <div className="mt-3 w-80 bg-white/90 backdrop-blur-xl shadow-2xl rounded-2xl p-4 animate-fadeIn border border-gray-100">
+        <div className="mt-3 w-80 bg-white shadow-2xl rounded-2xl p-4">
           <h3 className="font-bold mb-2 text-red-600">
             Blood Requests
           </h3>
@@ -75,7 +57,7 @@ export default function NotificationBell({ userId }) {
 
               <button
                 onClick={() => acceptRequest(req)}
-                className="mt-2 w-full bg-green-600 text-white py-1 rounded-lg hover:bg-green-700"
+                className="mt-2 w-full bg-green-600 text-white py-1 rounded-lg"
               >
                 Accept
               </button>
