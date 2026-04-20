@@ -5,13 +5,13 @@ export default function DonorDashboard() {
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/requests/donor/${donorId}`)
+    fetch(`http://lifelink-4.onrender.com/api/requests/donor${donorId}`)
       .then((res) => res.json())
       .then((data) => setRequests(data));
   }, []);
 
   const updateStatus = async (requestId, status) => {
-    await fetch(`https://lifelink-3-nk8d.onrender.com/requests/update/${requestId}`, {
+    await fetch(`https://lifelink-4.onrender.com/api/requests/update/${requestId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),

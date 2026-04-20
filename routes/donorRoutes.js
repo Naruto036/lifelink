@@ -3,7 +3,7 @@ import Donor from "../models/Donor.js";
 
 const router = express.Router();
 
-// ➜ ADD DONOR
+// ADD DONOR
 router.post("/", async (req, res) => {
   try {
     const donor = new Donor(req.body);
@@ -14,7 +14,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ➜ GET ALL DONORS
+// GET DONORS
 router.get("/", async (req, res) => {
   try {
     const donors = await Donor.find();
