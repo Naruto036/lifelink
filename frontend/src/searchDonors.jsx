@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Helper component
+// 🔄 Recenter map
 function RecenterMap({ coords }) {
   const map = useMap();
   useEffect(() => {
@@ -22,8 +22,9 @@ export default function SearchDonors() {
   const [donors, setDonors] = useState([]);
   const [message, setMessage] = useState("");
   const [acceptedDonors, setAcceptedDonors] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // ✅ FIXED: sendRequest OUTSIDE useEffect
+  // 📩 SEND REQUEST
   const sendRequest = async (donor) => {
     try {
       const res = await fetch(
@@ -55,7 +56,7 @@ export default function SearchDonors() {
     }
   };
 
-  // Fix Leaflet icons
+  // 🗺️ Fix leaflet icons
   useEffect(() => {
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
@@ -68,7 +69,7 @@ export default function SearchDonors() {
     });
   }, []);
 
-  // Get location
+  // 📍 GET LOCATION
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -76,35 +77,36 @@ export default function SearchDonors() {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-        console.log("User Location:", position.coords);
       },
-      (error) => {
-        console.error("Location error:", error);
-        setMessage("Please enable location.");
-      }
+      () => setMessage("Please enable location")
     );
   }, []);
+
+  // 🔁 LIVE ACCEPTED REQUESTS (auto refresh)
   useEffect(() => {
-  const fetchAccepted = async () => {
-    try {
-      const res = await fetch(
-        `https://lifelink-4.onrender.com/api/requests/accepted/${userId}`
-      );
+    const fetchAccepted = async () => {
+      try {
+        const res = await fetch(
+          `https://lifelink-4.onrender.com/api/requests/accepted/${userId}`
+        );
 
-      const data = await res.json();
+        const data = await res.json();
 
-      // store donorIds
-      const acceptedIds = data.map((req) => req.donorId);
-      setAcceptedDonors(acceptedIds);
+        const ids = data.map((req) => req.donorId);
+        setAcceptedDonors(ids);
+      } catch (err) {
+        console.error("Error fetching accepted:", err);
+      }
+    };
 
-    } catch (err) {
-      console.error("Error fetching accepted:", err);
-    }
-  };
+    fetchAccepted();
 
-  fetchAccepted();
-}, []);
+    const interval = setInterval(fetchAccepted, 5000);
 
+    return () => clearInterval(interval);
+  }, []);
+
+  // 🔍 SEARCH DONORS
   const handleSearch = async () => {
     if (!bloodGroup) {
       setMessage("Please select blood group");
@@ -112,15 +114,18 @@ export default function SearchDonors() {
     }
 
     if (!userLocation) {
-      setMessage("Location not available yet...");
+      setMessage("Location not ready...");
       return;
     }
 
-    try {
-      const bloodParam = encodeURIComponent(bloodGroup);
+    setLoading(true);
+    setMessage("");
 
+    try {
       const res = await fetch(
-        `https://lifelink-4.onrender.com/api/donors?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${bloodParam}`
+        `https://lifelink-4.onrender.com/api/donors?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${encodeURIComponent(
+          bloodGroup
+        )}`
       );
 
       const data = await res.json();
@@ -128,89 +133,127 @@ export default function SearchDonors() {
 
       if (data.length === 0) {
         setMessage(`No ${bloodGroup} donors found nearby.`);
-      } else {
-        setMessage("");
       }
     } catch (error) {
       console.error(error);
       setMessage("Error fetching donors.");
     }
+
+    setLoading(false);
   };
 
+  // ⏳ LOADING SCREEN
   if (!userLocation) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p>Getting your location...</p>
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-lg font-semibold">Getting your location...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Find Donors</h1>
+    <div className="bg-gray-50 min-h-screen p-6">
 
-      <select
-        value={bloodGroup}
-        onChange={(e) => setBloodGroup(e.target.value)}
-        className="border p-2 mb-3"
-      >
-        <option value="">Select Blood Group</option>
-        {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => (
-          <option key={bg} value={bg}>
-            {bg}
-          </option>
-        ))}
-      </select>
+      {/* HEADER */}
+      <h1 className="text-3xl font-bold text-red-600 text-center mb-6">
+        Find Blood Donors
+      </h1>
 
-      <button
-        onClick={handleSearch}
-        className="bg-red-600 text-white px-4 py-2 ml-2"
-      >
-        Search
-      </button>
+      {/* SEARCH BOX */}
+      <div className="bg-white shadow rounded-xl p-5 max-w-2xl mx-auto mb-6 flex gap-3">
+        <select
+          value={bloodGroup}
+          onChange={(e) => setBloodGroup(e.target.value)}
+          className="border p-3 rounded-lg w-full"
+        >
+          <option value="">Select Blood Group</option>
+          {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => (
+            <option key={bg}>{bg}</option>
+          ))}
+        </select>
 
-      <p className="text-red-500 mt-2">{message}</p>
+        <button
+          onClick={handleSearch}
+          className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-lg"
+        >
+          Search
+        </button>
+      </div>
 
-      {/* MAP */}
-      <MapContainer
-        center={[userLocation.lat, userLocation.lng]}
-        zoom={13}
-        style={{ height: "300px", marginTop: "20px" }}
-      >
-        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        <RecenterMap coords={userLocation} />
+      {message && (
+        <p className="text-center text-red-500 mb-4">{message}</p>
+      )}
 
-        <Marker position={[userLocation.lat, userLocation.lng]}>
-          <Popup>You are here</Popup>
-        </Marker>
+      {/* MAIN */}
+      <div className="grid md:grid-cols-2 gap-6">
 
-        {donors.map((donor) => (
-          <Marker
-            key={donor._id}
-            position={[
-              donor.location.coordinates[1],
-              donor.location.coordinates[0],
-            ]}
+        {/* MAP */}
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          <MapContainer
+            center={[userLocation.lat, userLocation.lng]}
+            zoom={13}
+            style={{ height: "400px", width: "100%" }}
           >
-            <Popup>{donor.name}</Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <RecenterMap coords={userLocation} />
 
-      {/* RESULTS */}
-      {donors.map((donor) => (
-        <div key={donor._id} className="border p-3 mt-3">
-          <p>{donor.name}</p>
-          <p>{donor.bloodGroup}</p>
+            <Marker position={[userLocation.lat, userLocation.lng]}>
+              <Popup>You are here</Popup>
+            </Marker>
 
-          <button
-            onClick={() => sendRequest(donor)}
-            className="bg-red-500 text-white px-3 py-1 mt-2"
-          >
-            Request Blood
-          </button>
+            {donors.map((donor) => (
+              <Marker
+                key={donor._id}
+                position={[
+                  donor.location.coordinates[1],
+                  donor.location.coordinates[0],
+                ]}
+              >
+                <Popup>
+                  {donor.name} ({donor.bloodGroup})
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
-      ))}
+
+        {/* DONOR LIST */}
+        <div className="space-y-4 max-h-[400px] overflow-y-auto ">
+
+          {loading && <p className="text-center text-gray-800 font-bold">Loading...</p>}
+
+          {donors.map((donor) => (
+            <div
+              key={donor._id}
+              className="bg-white shadow p-5 rounded-xl flex justify-between items-center hover:shadow-xl transition"
+            >
+              <div>
+                <h2 className="font-bold text-lg text-gray-900">{donor.name}</h2>
+                <p className="text-red-600 font-semibold">{donor.bloodGroup}</p>
+              </div>
+
+              <div>
+                {acceptedDonors.includes(donor._id) ? (
+                  <a
+                    href={`tel:${donor.phone}`}
+                    className="bg-green-700 hover:bg-green-800 text-white font-semibold px-4 py-2 rounded-lg"
+                  >
+                    Call Now
+                  </a>
+                ) : (
+                  <button
+                    onClick={() => sendRequest(donor)}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    Request
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
     </div>
   );
 }
