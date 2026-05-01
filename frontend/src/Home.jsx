@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Users, Activity, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   const [donorCount, setDonorCount] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchDonors = async () => {
@@ -35,29 +37,31 @@ export default function Home() {
             Saving Lives <span className="text-red-600">One Drop at a Time</span>
           </h1>
 
-          <p className="text-gray-600 mt-4 text-lg">
+          <p className="text-gray-700 mt-4 text-lg font-medium">
             Connect instantly with nearby blood donors in real-time.
           </p>
 
           <div className="flex gap-4 justify-center mt-6 flex-wrap">
 
-            <motion.a
+            {/* ✅ FIXED BUTTON */}
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              href="/register"
+              onClick={() => navigate("/donor")}
               className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md"
             >
               Become a Donor
-            </motion.a>
+            </motion.button>
 
-            <motion.a
+            {/* ✅ FIXED BUTTON */}
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              href="/search"
+              onClick={() => navigate("/search")}
               className="border border-red-600 text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl font-semibold"
             >
               Find Donors
-            </motion.a>
+            </motion.button>
 
           </div>
         </div>
@@ -73,7 +77,7 @@ export default function Home() {
         >
           <Users className="mx-auto text-red-600 mb-2" size={40} />
           <h2 className="text-3xl font-bold text-red-600">{donorCount}+</h2>
-          <p className="text-gray-600 mt-2">Registered Donors</p>
+          <p className="text-gray-700 mt-2 font-medium">Registered Donors</p>
         </motion.div>
 
         {/* Requests */}
@@ -83,7 +87,7 @@ export default function Home() {
         >
           <Activity className="mx-auto text-green-600 mb-2" size={40} />
           <h2 className="text-3xl font-bold text-green-600">Live</h2>
-          <p className="text-gray-600 mt-2">Active Requests</p>
+          <p className="text-gray-700 mt-2 font-medium">Active Requests</p>
         </motion.div>
 
         {/* Availability */}
@@ -93,7 +97,7 @@ export default function Home() {
         >
           <Clock className="mx-auto text-blue-600 mb-2" size={40} />
           <h2 className="text-3xl font-bold text-blue-600">24/7</h2>
-          <p className="text-gray-600 mt-2">Availability</p>
+          <p className="text-gray-700 mt-2 font-medium">Availability</p>
         </motion.div>
 
       </div>
