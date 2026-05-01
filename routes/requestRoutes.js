@@ -1,177 +1,67 @@
 import express from "express";
 import Request from "../models/Request.js";
 import Donor from "../models/Donor.js";
-import nodemailer from "nodemailer";
 
 const router = express.Router();
 
-// ✅ Mail transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
-// ✅ SEND REQUEST + EMAIL
+// ✅ SEND REQUEST (MAIN FIX)
 router.post("/send", async (req, res) => {
-  console.log("BODY DATA",req.body);
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
-    console.log("📩 Incoming request:", req.body);
+    console.log("Incoming request:", req.body);
 
+    // ✅ VALIDATION
+    if (!donorId || !requesterId || !requesterName || !bloodGroup) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // ✅ CHECK DONOR
     const donor = await Donor.findById(donorId);
 
     if (!donor) {
       return res.status(404).json({ message: "Donor not found" });
     }
 
-    console.log("👤 Donor found:", donor.name);
-    console.log("📧 Donor email:", donor.email);
-
-    // ❌ IMPORTANT FIX: Check email exists
+    // ✅ EMAIL CHECK
     if (!donor.email) {
-      return res.status(400).json({
-        message: "Donor does not have an email address",
-      });
+      return res.status(400).json({ message: "Donor has no email" });
     }
 
-    // ✅ Save request
-    const request = new Request({
+    // ✅ SAVE REQUEST
+    const newRequest = new Request({
       donorId,
       requesterId,
-      status: "Pending",
+      requesterName,
+      bloodGroup,
+      status: "pending",
     });
 
-    await request.save();
+    await newRequest.save();
 
-    const BASE_URL = "https://lifelink-4.onrender.com/api";
-
-    // ✅ SEND EMAIL
-    const info = await transporter.sendMail({
-      from: `"LifeLink 🩸" <${process.env.EMAIL_USER}>`,
-      to: donor.email,
-      subject: "🩸 Blood Request - Action Needed",
-      html: `
-        <h2>Blood Request</h2>
-        <p>Hello ${donor.name},</p>
-        <p><b>${requesterName || "Someone"}</b> needs blood.</p>
-        <p>Blood Group: <b>${bloodGroup || donor.bloodGroup}</b></p>
-
-        <br/>
-
-        <a href="${BASE_URL}/requests/action/${request._id}/accept"
-           style="background:green;color:white;padding:12px 18px;text-decoration:none;border-radius:6px;">
-           ✅ Accept
-        </a>
-
-        <br/><br/>
-
-        <a href="${BASE_URL}/requests/action/${request._id}/reject"
-           style="background:red;color:white;padding:12px 18px;text-decoration:none;border-radius:6px;">
-           ❌ Reject
-        </a>
-
-        <br/><br/>
-        <p>Thank you for being a lifesaver ❤️</p>
-      `,
-    });
-
-    console.log("✅ Email sent:", info.response);
-
-    res.status(201).json({
-      message: "Request sent & email delivered ✅",
-      request,
-    });
+    res.json({ message: "Request sent successfully" });
 
   } catch (err) {
-    console.error("❌ Email/Request Error:", err);
-
-    res.status(500).json({
-      error: "Failed to send request or email",
-      details: err.message,
-    });
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
 
-// ✅ ACCEPT / REJECT FROM EMAIL
-router.get("/action/:id/:type", async (req, res) => {
-  try {
-    const { id, type } = req.params;
-
-    const status = type === "accept" ? "Accepted" : "Rejected";
-
-    const request = await Request.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    ).populate("donorId");
-
-    if (!request) {
-      return res.send("Request not found");
-    }
-
-    if (status === "Accepted") {
-      return res.send(`
-        <h2>✅ Request Accepted</h2>
-        <p>The requester will contact you soon.</p>
-      `);
-    } else {
-      return res.send(`
-        <h2>❌ Request Rejected</h2>
-      `);
-    }
-
-  } catch (err) {
-    console.error("❌ Action Error:", err);
-    res.send("Error processing request");
-  }
-});
-
-
-// ✅ GET REQUESTS
-router.get("/donor/:donorId", async (req, res) => {
+// ✅ GET ACCEPTED REQUESTS (for showing phone)
+router.get("/accepted/:userId", async (req, res) => {
   try {
     const requests = await Request.find({
-      donorId: req.params.donorId,
-    }).populate("donorId");
-
-    res.json(requests);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-router.get("/accepted/:requesterId", async (req, res) => {
-  try {
-    const requests = await Request.find({
-      requesterId: req.params.requesterId,
-      status: "Accepted",
+      requesterId: req.params.userId,
+      status: "accepted",
     });
 
     res.json(requests);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Error fetching requests" });
   }
 });
 
-// ✅ UPDATE STATUS
-router.put("/update/:id", async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    const request = await Request.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
-
-    res.json(request);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 export default router;
