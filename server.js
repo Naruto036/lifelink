@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
+console.log("EMAIL CHECK:",process.env.EMAIL);
+console.log("PASS CHECK:",process.env.EMAIL_PASS?"OK":"MISSING");
 
 import express from "express";
 import http from "http";
