@@ -41,7 +41,7 @@ router.post("/send", async (req, res) => {
     const existing = await Request.findOne({
       donorId,
       requesterId,
-      status: "Pending", // ⚠️ must match exactly what you save
+      status: {$ne: "rejected"}, // ⚠️ must match exactly what you save
     });
 
     if (existing) {

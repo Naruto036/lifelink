@@ -13,29 +13,32 @@ import requestRoutes from "./routes/requestRoutes.js";
 const app = express();
 const server = http.createServer(app);
 
-// ✅ ALLOWED FRONTENDS
+// ✅ ALLOWED FRONTENDS (UPDATED)
 const allowedOrigins = [
   "http://localhost:5173",
   "https://lifelink-liart.vercel.app",
   "https://lifelink-qy8t.vercel.app",
   "https://lifelink-gavd.vercel.app",
+  "https://lifelink-g3u1.vercel.app", // ✅ YOUR CURRENT FRONTEND
 ];
 
-// ---------------- CORS FIX (IMPORTANT) ----------------
+// ✅ PROPER CORS CONFIG (FIXED)
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin) return callback(null, true);
+
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(null, true); // allow all (for debugging)
+
+    console.log("❌ Blocked by CORS:", origin);
+    return callback(new Error("Not allowed by CORS"));
   },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
 
 app.use(express.json());
-
 
 // ---------------- ROUTES ----------------
 app.use("/api/donors", donorRoutes);
@@ -44,7 +47,7 @@ app.use("/api/requests", requestRoutes);
 // ---------------- SOCKET.IO ----------------
 const io = new Server(server, {
   cors: {
-    origin: "*", // TEMP FIX (important for now)
+    origin: allowedOrigins, // ✅ FIXED (instead of "*")
     methods: ["GET", "POST"],
   },
 });
@@ -75,11 +78,11 @@ io.on("connection", (socket) => {
 
 // ---------------- DB ----------------
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("❌ DB Error:", err));
 
 // ---------------- START ----------------
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log("Server running on", PORT);
+  console.log("🚀 Server running on", PORT);
 });
