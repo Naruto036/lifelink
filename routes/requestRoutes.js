@@ -9,13 +9,13 @@ const router = express.Router();
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL,
+    user: process.env.EMAIL,        // ✅ FIXED
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// ✅ VERIFY EMAIL CONFIG (VERY IMPORTANT)
-transporter.verify(function (error, success) {
+// ✅ VERIFY EMAIL CONFIG
+transporter.verify((error, success) => {
   if (error) {
     console.error("❌ Email config error:", error);
   } else {
@@ -30,12 +30,10 @@ router.post("/send", async (req, res) => {
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
-    // ✅ Validate
     if (!donorId || !requesterId || !requesterName || !bloodGroup) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // ✅ Find donor
     const donor = await Donor.findById(donorId);
     if (!donor) {
       return res.status(404).json({ message: "Donor not found" });
@@ -45,18 +43,17 @@ router.post("/send", async (req, res) => {
       return res.status(400).json({ message: "Donor has no email" });
     }
 
-    // ✅ FIXED duplicate check (case corrected)
+    // ✅ FIX duplicate logic
     const existing = await Request.findOne({
       donorId,
       requesterId,
-      status: { $ne: "Rejected" },
+      status: "Pending",
     });
 
     if (existing) {
       return res.status(400).json({ message: "Request already sent" });
     }
 
-    // ✅ Save request
     const newRequest = new Request({
       donorId,
       requesterId,
@@ -75,7 +72,12 @@ router.post("/send", async (req, res) => {
 
       const info = await transporter.sendMail({
         from: `"LifeLink 🩸" <${process.env.EMAIL}>`,
+        
+        // 🔥 TEMP TEST (optional)
+        // to: "yourpersonalemail@gmail.com",
+        
         to: donor.email,
+
         subject: "🩸 Blood Request - Action Needed",
         html: `
           <h2>Blood Request</h2>
@@ -86,14 +88,14 @@ router.post("/send", async (req, res) => {
           <br/>
 
           <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
-             style="background:green;color:white;padding:12px 18px;text-decoration:none;border-radius:6px;">
+             style="background:green;color:white;padding:12px 18px;border-radius:6px;">
              ✅ Accept
           </a>
 
           <br/><br/>
 
           <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
-             style="background:red;color:white;padding:12px 18px;text-decoration:none;border-radius:6px;">
+             style="background:red;color:white;padding:12px 18px;border-radius:6px;">
              ❌ Reject
           </a>
 
@@ -118,56 +120,6 @@ router.post("/send", async (req, res) => {
 
   } catch (err) {
     console.error("❌ SEND REQUEST ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// ---------------- ACCEPT / REJECT ----------------
-router.get("/action/:id/:type", async (req, res) => {
-  try {
-    const { id, type } = req.params;
-
-    const status = type === "accept" ? "Accepted" : "Rejected";
-
-    const request = await Request.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
-
-    if (!request) {
-      return res.send("<h2>Request not found</h2>");
-    }
-
-    if (status === "Accepted") {
-      return res.send(`
-        <h2>✅ Request Accepted</h2>
-        <p>You can now contact the requester.</p>
-      `);
-    } else {
-      return res.send(`
-        <h2>❌ Request Rejected</h2>
-      `);
-    }
-
-  } catch (err) {
-    console.error("❌ ACTION ERROR:", err);
-    res.send("<h2>Error processing request</h2>");
-  }
-});
-
-// ---------------- GET ACCEPTED ----------------
-router.get("/accepted/:userId", async (req, res) => {
-  try {
-    const requests = await Request.find({
-      requesterId: req.params.userId,
-      status: "Accepted",
-    });
-
-    res.json(requests);
-
-  } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
