@@ -1,7 +1,23 @@
 import express from "express";
 import Donor from "../models/Donor.js";
+
 const router = express.Router();
 
+
+// ✅ ADD DONOR (FIXES 404)
+router.post("/", async (req, res) => {
+  try {
+    const donor = new Donor(req.body);
+    await donor.save();
+    res.status(201).json(donor);
+  } catch (err) {
+    console.error("Error saving donor:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ✅ GET DONORS (FIXED FILTER)
 router.get("/", async (req, res) => {
   try {
     let { bloodGroup } = req.query;
@@ -11,13 +27,11 @@ router.get("/", async (req, res) => {
     let filter = {};
 
     if (bloodGroup) {
-      // ✅ FULL FIX (handles + properly)
-      bloodGroup = decodeURIComponent(bloodGroup);
+      // decode A%2B → A+
+      bloodGroup = decodeURIComponent(bloodGroup).trim();
 
-      // remove accidental spaces
-      bloodGroup = bloodGroup.trim();
-
-      filter.bloodGroup = new RegExp(`^${bloodGroup}$`, "i");
+      // simple exact match (BEST FIX)
+      filter.bloodGroup = bloodGroup;
     }
 
     console.log("Final Filter:", filter);
@@ -29,4 +43,7 @@ router.get("/", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
-}); export default router;
+});
+
+
+export default router;
