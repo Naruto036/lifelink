@@ -14,9 +14,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// ✅ VERIFY EMAIL CONFIG (VERY IMPORTANT)
+transporter.verify(function (error, success) {
+  if (error) {
+    console.error("❌ Email config error:", error);
+  } else {
+    console.log("✅ Email server is ready");
+  }
+});
+
 // ---------------- SEND REQUEST ----------------
 router.post("/send", async (req, res) => {
-  console.log("BODY RECEIVED:", req.body);
+  console.log("📩 BODY RECEIVED:", req.body);
 
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
@@ -32,16 +41,15 @@ router.post("/send", async (req, res) => {
       return res.status(404).json({ message: "Donor not found" });
     }
 
-    // ❌ No email
     if (!donor.email) {
       return res.status(400).json({ message: "Donor has no email" });
     }
 
-    // ✅ Prevent duplicate ONLY if still pending
+    // ✅ FIXED duplicate check (case corrected)
     const existing = await Request.findOne({
       donorId,
       requesterId,
-      status: {$ne: "rejected"}, // ⚠️ must match exactly what you save
+      status: { $ne: "Rejected" },
     });
 
     if (existing) {
@@ -63,6 +71,8 @@ router.post("/send", async (req, res) => {
 
     // ---------------- SEND EMAIL ----------------
     try {
+      console.log("📧 Sending email to:", donor.email);
+
       const info = await transporter.sendMail({
         from: `"LifeLink 🩸" <${process.env.EMAIL}>`,
         to: donor.email,
@@ -92,14 +102,14 @@ router.post("/send", async (req, res) => {
         `,
       });
 
-      console.log("EMAIL SENT:", info.response);
+      console.log("✅ EMAIL SENT:", info.response);
 
       return res.status(201).json({
         message: "Request sent & email delivered ✅",
       });
 
     } catch (emailErr) {
-      console.error("EMAIL ERROR:", emailErr);
+      console.error("❌ EMAIL ERROR:", emailErr);
 
       return res.status(201).json({
         message: "Request saved but email failed ⚠️",
@@ -107,11 +117,10 @@ router.post("/send", async (req, res) => {
     }
 
   } catch (err) {
-    console.error("SEND REQUEST ERROR:", err);
+    console.error("❌ SEND REQUEST ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // ---------------- ACCEPT / REJECT ----------------
 router.get("/action/:id/:type", async (req, res) => {
@@ -142,13 +151,12 @@ router.get("/action/:id/:type", async (req, res) => {
     }
 
   } catch (err) {
-    console.error("ACTION ERROR:", err);
+    console.error("❌ ACTION ERROR:", err);
     res.send("<h2>Error processing request</h2>");
   }
 });
 
-
-// ---------------- GET ACCEPTED (for frontend) ----------------
+// ---------------- GET ACCEPTED ----------------
 router.get("/accepted/:userId", async (req, res) => {
   try {
     const requests = await Request.find({
