@@ -5,17 +5,16 @@ import nodemailer from "nodemailer";
 
 const router = express.Router();
 
-// ---------------- EMAIL CONFIG ----------------
+/* ---------------- EMAIL CONFIG ---------------- */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL,        // ✅ FIXED
+    user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-// ✅ VERIFY EMAIL CONFIG
-transporter.verify((error, success) => {
+transporter.verify((error) => {
   if (error) {
     console.error("❌ Email config error:", error);
   } else {
@@ -23,10 +22,8 @@ transporter.verify((error, success) => {
   }
 });
 
-// ---------------- SEND REQUEST ----------------
+/* ---------------- SEND REQUEST ---------------- */
 router.post("/send", async (req, res) => {
-  console.log("📩 BODY RECEIVED:", req.body);
-
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
@@ -35,15 +32,8 @@ router.post("/send", async (req, res) => {
     }
 
     const donor = await Donor.findById(donorId);
-    if (!donor) {
-      return res.status(404).json({ message: "Donor not found" });
-    }
+    if (!donor) return res.status(404).json({ message: "Donor not found" });
 
-    if (!donor.email) {
-      return res.status(400).json({ message: "Donor has no email" });
-    }
-
-    // ✅ FIX duplicate logic
     const existing = await Request.findOne({
       donorId,
       requesterId,
@@ -66,60 +56,43 @@ router.post("/send", async (req, res) => {
 
     const BASE_URL = "https://lifelink-4.onrender.com";
 
-    // ---------------- SEND EMAIL ----------------
-    try {
-      console.log("📧 Sending email to:", donor.email);
+    await transporter.sendMail({
+      from: `"LifeLink 🩸" <${process.env.EMAIL}>`,
+      to: donor.email,
+      subject: "Blood Request",
+      html: `
+        <h2>Blood Request</h2>
+        <p>${requesterName} needs ${bloodGroup} blood.</p>
 
-      const info = await transporter.sendMail({
-        from: `"LifeLink 🩸" <${process.env.EMAIL}>`,
-        
-        // 🔥 TEMP TEST (optional)
-        // to: "yourpersonalemail@gmail.com",
-        
-        to: donor.email,
+        <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept">Accept</a>
+        <br/>
+        <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject">Reject</a>
+      `,
+    });
 
-        subject: "🩸 Blood Request - Action Needed",
-        html: `
-          <h2>Blood Request</h2>
-          <p>Hello ${donor.name},</p>
-          <p><b>${requesterName}</b> needs blood.</p>
-          <p>Blood Group: <b>${bloodGroup}</b></p>
-
-          <br/>
-
-          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
-             style="background:green;color:white;padding:12px 18px;border-radius:6px;">
-             ✅ Accept
-          </a>
-
-          <br/><br/>
-
-          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
-             style="background:red;color:white;padding:12px 18px;border-radius:6px;">
-             ❌ Reject
-          </a>
-
-          <br/><br/>
-          <p>Thank you ❤️</p>
-        `,
-      });
-
-      console.log("✅ EMAIL SENT:", info.response);
-
-      return res.status(201).json({
-        message: "Request sent & email delivered ✅",
-      });
-
-    } catch (emailErr) {
-      console.error("❌ EMAIL ERROR:", emailErr);
-
-      return res.status(201).json({
-        message: "Request saved but email failed ⚠️",
-      });
-    }
+    return res.status(201).json({
+      message: "Request sent successfully",
+    });
 
   } catch (err) {
-    console.error("❌ SEND REQUEST ERROR:", err);
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+/* ---------------- FIX: ACCEPTED REQUESTS ROUTE (IMPORTANT FIX) ---------------- */
+router.get("/accepted/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const accepted = await Request.find({
+      requesterId: userId,
+      status: "Accepted",
+    });
+
+    res.json(accepted);
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
