@@ -28,7 +28,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://lifelink-liart.vercel.app",
+    "https://lifelink-pw8s.vercel.app",
     "https://lifelink-qy8t.vercel.app",
     "https://lifelink-gavd.vercel.app",
   ],
