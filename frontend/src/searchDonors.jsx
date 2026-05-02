@@ -23,7 +23,7 @@ export default function SearchDonors() {
   const [message, setMessage] = useState("");
   const [acceptedDonors, setAcceptedDonors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const BASE_URL="https://lifelink-4.onrender.com"
+  const BASE_URL="https://lifelink-4.onrender.com";
 
   // 📩 SEND REQUEST
   const sendRequest = async (donor) => {
