@@ -4,7 +4,7 @@ import Donor from "../models/Donor.js";
 import { transporter } from "../config/mailer.js";
 
 const router = express.Router();
-const BASE_URL= process.env.BASE_URL||"http://localhost:5000";
+const BASE_URL= process.env.BASE_URL||"https://lifelink-4.onrender.com";
 
 /* ---------------- SEND REQUEST ---------------- */
 router.post("/send", async (req, res) => {
