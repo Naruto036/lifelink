@@ -49,19 +49,22 @@ router.post("/send", async (req, res) => {
         to: donor.email,
         subject: "🩸 Blood Request",
         html: `
-          <h2>Blood Request</h2>
-          <p><b>${requesterName}</b> needs <b>${bloodGroup}</b> blood.</p>
-          <p>Please respond to the request</p>
-          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
-          style="padding:10px 15px; background:green;coloor:white;text-dec
-          oration:none;margin-right:10px;">
-          Accept
-          </a>
-          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
-          style="padding:10px 15px;background:red;color:white;text-decoration:none;">
-          Reject
-          </a>
-        `,
+  <h2>🩸 Blood Request</h2>
+  <p><b>${requesterName}</b> needs <b>${bloodGroup}</b> blood.</p>
+
+  <p>Please respond below:</p>
+
+  <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
+     style="padding:10px 15px;background:green;color:white;text-decoration:none;margin-right:10px;">
+     Accept
+  </a>
+
+  <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
+     style="padding:10px 15px;background:red;color:white;text-decoration:none;">
+     Reject
+  </a>
+`,
+        
       });
 
       console.log("✅ Email sent to:", donor.email);
