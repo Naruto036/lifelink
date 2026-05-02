@@ -47,7 +47,7 @@ app.use((req, res, next) => {
 
 /* ---------------- ROUTES ---------------- */
 app.use("/api/donors", donorRoutes);
-app.use("/api/requests", requestRoutes);
+app.use("/api/requests/send", requestRoutes);
 
 /* ---------------- SOCKET.IO ---------------- */
 const io = new Server(server, {
