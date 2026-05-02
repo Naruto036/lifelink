@@ -1,7 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-console.log("EMAIL CHECK:",process.env.EMAIL_USER);
-console.log("PASS CHECK:",process.env.EMAIL_PASS?"OK":"MISSING");
 
 import express from "express";
 import http from "http";
@@ -15,38 +13,46 @@ import requestRoutes from "./routes/requestRoutes.js";
 const app = express();
 const server = http.createServer(app);
 
-// ✅ ALLOWED FRONTENDS
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://lifelink-liart.vercel.app",
-  "https://lifelink-qy8t.vercel.app",
-  "https://lifelink-gavd.vercel.app",
-];
+/* ---------------- DB ---------------- */
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
-// ---------------- CORS FIX (IMPORTANT) ----------------
+/* ---------------- IMPORTANT ORDER FIX ---------------- */
+// 1️⃣ JSON parser FIRST (VERY IMPORTANT)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 2️⃣ CORS SECOND
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(null, true); // allow all (for debugging)
-  },
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://lifelink-liart.vercel.app",
+    "https://lifelink-qy8t.vercel.app",
+    "https://lifelink-gavd.vercel.app",
+  ],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
 }));
 
-app.use(express.json());
+/* ---------------- LOG REQUEST BODY (DEBUG) ---------------- */
+app.use((req, res, next) => {
+  if (req.method === "POST") {
+    console.log("📩 Incoming POST:", req.path);
+    console.log("BODY:", req.body);
+  }
+  next();
+});
 
-
-// ---------------- ROUTES ----------------
+/* ---------------- ROUTES ---------------- */
 app.use("/api/donors", donorRoutes);
 app.use("/api/requests", requestRoutes);
 
-// ---------------- SOCKET.IO ----------------
+/* ---------------- SOCKET.IO ---------------- */
 const io = new Server(server, {
   cors: {
-    origin: "*", // TEMP FIX (important for now)
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
@@ -75,12 +81,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// ---------------- DB ----------------
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
-
-// ---------------- START ----------------
+/* ---------------- START SERVER ---------------- */
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log("Server running on", PORT);

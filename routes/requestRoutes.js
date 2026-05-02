@@ -1,50 +1,29 @@
 import express from "express";
 import Request from "../models/Request.js";
 import Donor from "../models/Donor.js";
-import nodemailer from "nodemailer";
+import { transporter } from "../config/mailer.js";
 
 const router = express.Router();
-
-/* ---------------- EMAIL CONFIG ---------------- */
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-transporter.verify((error) => {
-  if (error) {
-    console.error("❌ Email config error:", error);
-  } else {
-    console.log("✅ Email server is ready");
-  }
-});
+const BASE_URL= process.env.BASE_URL||"http://localhost:5000";
 
 /* ---------------- SEND REQUEST ---------------- */
 router.post("/send", async (req, res) => {
+  console.log("POST /send HIT");
   try {
     const { donorId, requesterId, requesterName, bloodGroup } = req.body;
 
+    // ✅ validation
     if (!donorId || !requesterId || !requesterName || !bloodGroup) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({
+        message: "Missing required fields",
+      });
     }
 
-    const donor = await Donor.findById(donorId);
-    if (!donor) return res.status(404).json({ message: "Donor not found" });
+    // ✅ check duplicate request
+   
 
-    const existing = await Request.findOne({
-      donorId,
-      requesterId,
-      status: "Pending",
-    });
-
-    if (existing) {
-      return res.status(400).json({ message: "Request already sent" });
-    }
-
-    const newRequest = new Request({
+    // ✅ save request
+    const newRequest = await Request.create({
       donorId,
       requesterId,
       requesterName,
@@ -52,35 +31,60 @@ router.post("/send", async (req, res) => {
       status: "Pending",
     });
 
-    await newRequest.save();
+    // ✅ get donor details
+    const donor = await Donor.findById(donorId);
+    console.log("DONOR EMAIL:",donor?.email);
 
-    const BASE_URL = "https://lifelink-4.onrender.com";
+    if (!donor || !donor.email) {
+      console.log("❌ Donor email not found");
+      return res.status(404).json({
+        message: "Donor email not found",
+      });
+    }
 
-    await transporter.sendMail({
-      from: `"LifeLink 🩸" <${process.env.EMAIL}>`,
-      to: donor.email,
-      subject: "Blood Request",
-      html: `
-        <h2>Blood Request</h2>
-        <p>${requesterName} needs ${bloodGroup} blood.</p>
+    // ✅ send email safely (non-blocking but controlled)
+    try {
+       const info = await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: donor.email,
+        subject: "🩸 Blood Request",
+        html: `
+          <h2>Blood Request</h2>
+          <p><b>${requesterName}</b> needs <b>${bloodGroup}</b> blood.</p>
+          <p>Please respond to the request</p>
+          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
+          style="padding:10px 15px; background:green;coloor:white;text-dec
+          oration:none;margin-right:10px;">
+          Accept
+          </a>
+          <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
+          style="padding:10px 15px;background:red;color:white;text-decoration:none;">
+          Reject
+          </a>
+        `,
+      });
 
-        <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept">Accept</a>
-        <br/>
-        <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject">Reject</a>
-      `,
-    });
+      console.log("✅ Email sent to:", donor.email);
 
+    } catch (emailErr) {
+      console.log("❌ Email error:", emailErr.message);
+    }
+
+    // ✅ response
     return res.status(201).json({
       message: "Request sent successfully",
+      request: newRequest,
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.log("❌ Server error:", err);
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 });
 
-/* ---------------- FIX: ACCEPTED REQUESTS ROUTE (IMPORTANT FIX) ---------------- */
+/* ---------------- ACCEPTED REQUESTS ---------------- */
 router.get("/accepted/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -91,8 +95,9 @@ router.get("/accepted/:userId", async (req, res) => {
     });
 
     res.json(accepted);
+
   } catch (err) {
-    console.error(err);
+    console.log(err);
     res.status(500).json({ message: "Server error" });
   }
 });

@@ -15,7 +15,7 @@ function RecenterMap({ coords }) {
 }
 
 export default function SearchDonors() {
-  const userId = "USER123";
+  const userId = "69f45f63f011620cf1b15d3d";
 
   const [userLocation, setUserLocation] = useState(null);
   const [bloodGroup, setBloodGroup] = useState("");
@@ -23,12 +23,15 @@ export default function SearchDonors() {
   const [message, setMessage] = useState("");
   const [acceptedDonors, setAcceptedDonors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const BASE_URL="https://lifelink-4.onrender.com"
 
   // 📩 SEND REQUEST
   const sendRequest = async (donor) => {
+    console.log("sending to donor",donor._id);
     try {
+      
       const res = await fetch(
-        "https://lifelink-4.onrender.com/api/requests/send",
+        "http://localhost:5000/api/requests/send",
         {
           method: "POST",
           headers: {
@@ -82,7 +85,7 @@ export default function SearchDonors() {
     );
   }, []);
 
-  // 🔁 LIVE ACCEPTED REQUESTS (auto refresh)
+  // 🔁 LIVE ACCEPTED REQUESTS
   useEffect(() => {
     const fetchAccepted = async () => {
       try {
@@ -100,7 +103,6 @@ export default function SearchDonors() {
     };
 
     fetchAccepted();
-
     const interval = setInterval(fetchAccepted, 5000);
 
     return () => clearInterval(interval);
@@ -159,22 +161,35 @@ export default function SearchDonors() {
         Find Blood Donors
       </h1>
 
-      {/* SEARCH BOX */}
-      <div className="bg-white shadow rounded-xl p-5 max-w-2xl mx-auto mb-6 flex gap-3">
+      {/* SEARCH BOX (UPDATED UI) */}
+      <div className="bg-white shadow rounded-xl p-5 max-w-2xl mx-auto mb-6 flex gap-3 items-center">
+
         <select
           value={bloodGroup}
           onChange={(e) => setBloodGroup(e.target.value)}
-          className="border p-3 rounded-lg w-full"
+          className="
+            border-2 border-red-500
+            bg-gradient-to-r from-white to-red-50
+            p-3 rounded-lg w-full
+            font-bold text-gray-900
+            shadow-md
+            focus:outline-none
+            focus:ring-4 focus:ring-red-300
+            transition
+          "
         >
-          <option value="">Select Blood Group</option>
+          <option value="">🩸 Select Blood Group</option>
+
           {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((bg) => (
-            <option key={bg}>{bg}</option>
+            <option key={bg} value={bg}>
+              {bg}
+            </option>
           ))}
         </select>
 
         <button
           onClick={handleSearch}
-          className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-lg"
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold shadow-md transition"
         >
           Search
         </button>
@@ -218,9 +233,13 @@ export default function SearchDonors() {
         </div>
 
         {/* DONOR LIST */}
-        <div className="space-y-4 max-h-[400px] overflow-y-auto ">
+        <div className="space-y-4 max-h-[400px] overflow-y-auto">
 
-          {loading && <p className="text-center text-gray-800 font-bold">Loading...</p>}
+          {loading && (
+            <p className="text-center text-gray-800 font-bold">
+              Loading...
+            </p>
+          )}
 
           {donors.map((donor) => (
             <div
@@ -228,8 +247,12 @@ export default function SearchDonors() {
               className="bg-white shadow p-5 rounded-xl flex justify-between items-center hover:shadow-xl transition"
             >
               <div>
-                <h2 className="font-bold text-lg text-gray-900">{donor.name}</h2>
-                <p className="text-red-600 font-semibold">{donor.bloodGroup}</p>
+                <h2 className="font-bold text-lg text-gray-900">
+                  {donor.name}
+                </h2>
+                <p className="text-red-600 font-semibold">
+                  {donor.bloodGroup}
+                </p>
               </div>
 
               <div>
