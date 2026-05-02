@@ -101,5 +101,32 @@ router.get("/accepted/:userId", async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+router.get("/action/:id/accept",async (req,res)=>{
+
+try{
+  await
+  Request.findByIdAndUpdate(req.params.id,{
+    status:"Accepted",
+  });
+  res.send("Request Accepted");
+}catch(err){
+res.status(500).send("Error");
+}
+});
+router.get("/action/:id/reject",async (req,res)=>{
+try{
+await
+Request.findByIdAndUpdate(req.params.id,{
+  status:"Rejected"
+});
+res.send("Requests Rejected");
+}catch(err){
+  res.status(500).send("Error");
+}
+});
+
+
+
+
 
 export default router;
