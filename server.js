@@ -25,13 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 2️⃣ CORS SECOND
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "https://lifelink-pw8s.vercel.app",
-    "https://lifelink-qy8t.vercel.app",
-    "https://lifelink-gavd.vercel.app",
-  ],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
 }));
