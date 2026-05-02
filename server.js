@@ -22,6 +22,9 @@ mongoose.connect(process.env.MONGO_URI)
 // 1️⃣ JSON parser FIRST (VERY IMPORTANT)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.get("/",(req,res)=>{
+  res.send("Backend is running");
+});
 
 // 2️⃣ CORS SECOND
 app.use(cors({

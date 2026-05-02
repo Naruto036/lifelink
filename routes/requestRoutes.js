@@ -4,7 +4,7 @@ import Donor from "../models/Donor.js";
 import { transporter } from "../config/mailer.js";
 
 const router = express.Router();
-const BASE_URL= process.env.BASE_URL||"https://lifelink-4.onrender.com";
+const BASE_URL= process.env.BASE_URL||"http://localhost:5000";
 
 /* ---------------- SEND REQUEST ---------------- */
 router.post("/send", async (req, res) => {
@@ -102,6 +102,24 @@ router.get("/accepted/:userId", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+router.get("/action/:id/:status", async (req, res) => {
+  try {
+    const { id, status } = req.params;
+
+    const updated = await Request.findByIdAndUpdate(id, {
+      status: status === "accept" ? "Accepted" : "Rejected",
+    });
+
+    if (!updated) {
+      return res.status(404).send("Request not found");
+    }
+
+    res.send("Request updated successfully");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
   }
 });
 router.get("/action/:id/accept",async (req,res)=>{
