@@ -23,15 +23,14 @@ export default function SearchDonors() {
   const [message, setMessage] = useState("");
   const [acceptedDonors, setAcceptedDonors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const BASE_URL="http://localhost:5000";
+  const BASE_URL="https://lifelink-4.onrender.com";
 
   // 📩 SEND REQUEST
   const sendRequest = async (donor) => {
     console.log("sending to donor",donor._id);
     try {
       
-      const res = await fetch(
-        "http://localhost:5000/api/requests/send",
+      const res = await fetch(`${BASE_URL}/api/requests/send`,
         {
           method: "POST",
           headers: {
@@ -90,7 +89,7 @@ export default function SearchDonors() {
     const fetchAccepted = async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/api/requests/accepted/${userId}`
+          `${BASE_URL}/api/requests/accepted/${userId}`
         );
 
         const data = await res.json();
@@ -125,7 +124,7 @@ export default function SearchDonors() {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/donors?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${encodeURIComponent(
+        `${BASE_URL}/api/donors?lat=${userLocation.lat}&lng=${userLocation.lng}&bloodGroup=${encodeURIComponent(
           bloodGroup
         )}`
       );

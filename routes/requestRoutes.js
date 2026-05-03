@@ -4,7 +4,7 @@ import Donor from "../models/Donor.js";
 import { transporter } from "../config/mailer.js";
 
 const router = express.Router();
-const BASE_URL= process.env.BASE_URL||"http://localhost:5000";
+const BASE_URL="https://lifelink-4.onrender.com";
 
 /* ---------------- SEND REQUEST ---------------- */
 router.post("/send", async (req, res) => {
@@ -54,12 +54,12 @@ router.post("/send", async (req, res) => {
 
   <p>Please respond below:</p>
 
-  <a href="${BASE_URL}/api/requests/action/${newRequest._id}/accept"
+  <a href='${BASE_URL}/api/requests/action/${newRequest._id}/accept'
      style="padding:10px 15px;background:green;color:white;text-decoration:none;margin-right:10px;">
      Accept
   </a>
 
-  <a href="${BASE_URL}/api/requests/action/${newRequest._id}/reject"
+  <a href='${BASE_URL}/api/requests/action/${newRequest._id}/reject'
      style="padding:10px 15px;background:red;color:white;text-decoration:none;">
      Reject
   </a>
