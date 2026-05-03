@@ -49,7 +49,7 @@ app.use("/api/requests", requestRoutes);
 /* ---------------- SOCKET.IO ---------------- */
 const io = new Server(server, {
   cors: {
-    origin: "https://lifelink-g3u1.vercel.app/search",
+    origin: "*",
     methods: ["GET", "POST"],
   },
 });
