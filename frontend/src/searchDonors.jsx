@@ -30,7 +30,7 @@ export default function SearchDonors() {
     console.log("sending to donor",donor._id);
     try {
       
-      const res = await fetch(`${BASE_URL}/api/requests/send`,
+      const res = await fetch(`${BASE_URL}/api/requests/search`,
         {
           method: "POST",
           headers: {
