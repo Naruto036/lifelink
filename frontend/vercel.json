@@ -1,5 +1,8 @@
 {
-    "rowrites":[
-        {"src":"/(.*)", "destination":"/"}
-    ]
+  "rewrites": [
+    {
+      "source": "/((?!assets|api|favicon.ico).*)",
+      "destination": "/index.html"
+    }
+  ]
 }
